@@ -7,7 +7,7 @@ from security import require_role, get_current_user
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-# 👑 ADMIN + PROFESSOR VIEW USERS
+# ADMIN + PROFESSOR VIEW USERS
 @router.get("/")
 def get_users(
     db: Session = Depends(get_db),
@@ -16,7 +16,7 @@ def get_users(
     return db.query(User).all()
 
 
-# 🔥 UPDATE ROLE (PROFESSOR + ADMIN)
+# UPDATE ROLE (PROFESSOR + ADMIN)
 @router.put("/{user_id}/role")
 def update_role(
     user_id: int,
@@ -30,18 +30,18 @@ def update_role(
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # 🚫 SYSTEM ADMIN PROTECTION
+    # SYSTEM ADMIN PROTECTION
     if target.is_system:
         raise HTTPException(
             status_code=403,
             detail="System admin cannot be modified"
         )
 
-    # 🚫 VALID ROLE CHECK
+    # VALID ROLE CHECK
     if new_role not in ["student", "professor", "admin"]:
         raise HTTPException(status_code=400, detail="Invalid role")
 
-    # 🚫 PROFESSOR CANNOT CREATE ADMIN
+    # PROFESSOR CANNOT CREATE ADMIN
     if user["role"] == "professor" and new_role == "admin":
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -51,7 +51,7 @@ def update_role(
     return {"message": "Role updated successfully"}
 
 
-# ❌ DELETE USER (ADMIN ONLY)
+# DELETE USER (ADMIN ONLY)
 @router.delete("/{user_id}")
 def delete_user(
     user_id: int,
@@ -64,7 +64,7 @@ def delete_user(
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # 🚫 SYSTEM ADMIN PROTECTION
+    # SYSTEM ADMIN PROTECTION
     if target.is_system:
         raise HTTPException(
             status_code=403,
