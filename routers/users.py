@@ -7,7 +7,7 @@ from security import require_role, get_current_user
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-# ADMIN + PROFESSOR VIEW USERS
+# ADMIN + PROFESSOR VIEW USERS  
 @router.get("/")
 def get_users(
     db: Session = Depends(get_db),
