@@ -1,22 +1,41 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import User
 from deps import get_db
-from security import require_role, get_current_user
+from security import require_role
+from services.user_service import (get_users_service,update_role_service,delete_user_service)
+from utils.logger import logger
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(
+    prefix="/users",
+    tags=["Users"]
+)
 
-
-# ADMIN + PROFESSOR VIEW USERS  
 @router.get("/")
 def get_users(
     db: Session = Depends(get_db),
     user=Depends(require_role("professor"))
 ):
-    return db.query(User).all()
+
+    try:
+        logger.info("Get users API called")
+        result = get_users_service(db)
+        return {
+            "status": 200,
+            "data": result
+        }
+
+    except HTTPException as e:
+        logger.error(e.detail)
+        raise e
+
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Internal Server Error"
+        )
 
 
-# UPDATE ROLE (PROFESSOR + ADMIN)
 @router.put("/{user_id}/role")
 def update_role(
     user_id: int,
@@ -25,33 +44,28 @@ def update_role(
     user=Depends(require_role("professor"))
 ):
 
-    target = db.query(User).filter(User.id == user_id).first()
+    try:
 
-    if not target:
-        raise HTTPException(status_code=404, detail="User not found")
+        logger.info("Update role API called")
+        result = update_role_service(db,user_id,new_role,user)
 
-    # SYSTEM ADMIN PROTECTION
-    if target.is_system:
+        return {
+            "status": 200,
+            "data": result
+        }
+
+    except HTTPException as e:
+        logger.error(e.detail)
+        raise e
+
+    except Exception as e:
+        logger.error(str(e))
         raise HTTPException(
-            status_code=403,
-            detail="System admin cannot be modified"
+            status_code=500,
+            detail="Internal Server Error"
         )
 
-    # VALID ROLE CHECK
-    if new_role not in ["student", "professor", "admin"]:
-        raise HTTPException(status_code=400, detail="Invalid role")
 
-    # PROFESSOR CANNOT CREATE ADMIN
-    if user["role"] == "professor" and new_role == "admin":
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    target.role = new_role
-    db.commit()
-
-    return {"message": "Role updated successfully"}
-
-
-# DELETE USER (ADMIN ONLY)
 @router.delete("/{user_id}")
 def delete_user(
     user_id: int,
@@ -59,19 +73,22 @@ def delete_user(
     user=Depends(require_role("admin"))
 ):
 
-    target = db.query(User).filter(User.id == user_id).first()
+    try:
+        logger.info("Delete user API called")
+        result = delete_user_service(db,user_id)
 
-    if not target:
-        raise HTTPException(status_code=404, detail="User not found")
+        return {
+            "status": 200,
+            "data": result
+        }
 
-    # SYSTEM ADMIN PROTECTION
-    if target.is_system:
+    except HTTPException as e:
+        logger.error(e.detail)
+        raise e
+
+    except Exception as e:
+        logger.error(str(e))
         raise HTTPException(
-            status_code=403,
-            detail="System admin cannot be deleted"
+            status_code=500,
+            detail="Internal Server Error"
         )
-
-    db.delete(target)
-    db.commit()
-
-    return {"message": "User deleted"}

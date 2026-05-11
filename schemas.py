@@ -26,4 +26,4 @@ class StudentResponse(BaseModel):
     Physical_Activity: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
