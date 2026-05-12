@@ -1,35 +1,65 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import User
-from schemas import SignupRequest, LoginRequest, TokenResponse
+from schemas import (SignupRequest,LoginRequest,TokenResponse)
 from deps import get_db
-from security import hash_password, verify_password, create_access_token
+from services.auth_service import (signup_service,login_service)
+from utils.logger import logger
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
-
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"]
+)
 
 @router.post("/signup")
-def signup(payload: SignupRequest, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.username == payload.username).first():
-        raise HTTPException(status_code=400, detail="Username exists")
+def signup(
+    payload: SignupRequest,
+    db: Session = Depends(get_db)
+):
 
-    user = User(
-        username=payload.username,
-        email=payload.email,
-        hashed_password=hash_password(payload.password),
-        role="student" 
-    )
-    db.add(user)
-    db.commit()
-    return {"message": "User created"}
+    try:
+        logger.info("Signup API called")
+        result = signup_service(payload, db)
+        return {
+            "status": 200,
+            "data": result
+        }
+
+    except HTTPException as e:
+
+        logger.error(e.detail)
+        raise e
+
+    except Exception as e:
+
+        logger.error(str(e))
+
+        raise HTTPException(
+            status_code=500,
+            detail="Internal Server Error"
+        )
 
 
-@router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == payload.username).first()
+@router.post(
+    "/login",
+    response_model=TokenResponse
+)
+def login(
+    payload: LoginRequest,
+    db: Session = Depends(get_db)
+):
 
-    if not user or not verify_password(payload.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    try:
+        logger.info("Login API called")
+        result = login_service(payload, db)
+        return result
 
-    token = create_access_token({"sub": user.username,"role": user.role})
-    return {"access_token": token, "token_type": "bearer"}
+    except HTTPException as e:
+        logger.error(e.detail)
+        raise e
+
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Internal Server Error"
+        )

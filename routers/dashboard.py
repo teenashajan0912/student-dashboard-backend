@@ -1,59 +1,54 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import Student
 from deps import get_db
+from services.dashboard_service import (get_dashboard_service,physical_activity_service)
+from utils.logger import logger
 
 router = APIRouter()
 @router.get("/dashboard")
-def dashboard(db: Session = Depends(get_db)):
-    students = db.query(Student).all()
+def dashboard(
+    db: Session = Depends(get_db)
+):
 
-    summary = {
-        "Low": {"Male": 0, "Female": 0, "Avg_Attendance": 0, "Avg_Hours_Studied": 0, "count": 0},
-        "Medium": {"Male": 0, "Female": 0, "Avg_Attendance": 0, "Avg_Hours_Studied": 0, "count": 0},
-        "High": {"Male": 0, "Female": 0, "Avg_Attendance": 0, "Avg_Hours_Studied": 0, "count": 0},
-    }
+    try:
+        logger.info("Dashboard API called")
+        result = get_dashboard_service(db)
+        return {
+            "status": 200,
+            "data": result
+        }
 
-    for s in students:
-        if s.Exam_Score <= 50:
-            category = "Low"
-        elif s.Exam_Score <= 75:
-            category = "Medium"
-        else:
-            category = "High"
+    except HTTPException as e:
+        logger.error(e.detail)
+        raise e
 
-        summary[category]["count"] += 1
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Internal Server Error"
+        )
 
-        if s.Gender == "Male":
-            summary[category]["Male"] += 1
-        else:
-            summary[category]["Female"] += 1
 
-        summary[category]["Avg_Attendance"] += s.Attendance
-        summary[category]["Avg_Hours_Studied"] += s.Hours_Studied
-
-    result = []
-    for key, val in summary.items():
-        count = val["count"] if val["count"] > 0 else 1
-
-        result.append({
-            "Performance": key,
-            "Male": val["Male"],
-            "Female": val["Female"],
-            "Avg_Attendance": val["Avg_Attendance"] / count,
-            "Avg_Hours_Studied": val["Avg_Hours_Studied"] / count,
-        })
-    return result
 @router.get("/physical-activity")
-def physical_activity_chart(db: Session = Depends(get_db)):
-    students = db.query(Student).all()
+def physical_activity(
+    db: Session = Depends(get_db)
+):
+    try:
+        logger.info("Physical activity API called")
+        result = physical_activity_service(db)
+        return {
+            "status": 200,
+            "data": result
+        }
 
-    activity_count = {}
+    except HTTPException as e:
+        logger.error(e.detail)
+        raise e
 
-    for s in students:
-        activity = s.Physical_Activity or "Unknown"
-        activity_count[activity] = activity_count.get(activity, 0) + 1
-
-    result = [{"name": k, "value": v} for k, v in activity_count.items()]
-
-    return result
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Internal Server Error"
+        )
