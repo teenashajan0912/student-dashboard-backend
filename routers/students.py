@@ -8,14 +8,14 @@ from utils.logger import logger
 router = APIRouter()
 
 @router.get("/students")
-def get_students(
+async def get_students(
     db: Session = Depends(get_db),
     user=Depends(get_current_user)
 ):
 
     try:
         logger.info("Students API called")
-        result = get_students_service(db)
+        result = await get_students_service(db)
         return {
             "status": 200,
             "data": result

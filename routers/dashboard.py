@@ -6,13 +6,13 @@ from utils.logger import logger
 
 router = APIRouter()
 @router.get("/dashboard")
-def dashboard(
+async def dashboard(
     db: Session = Depends(get_db)
 ):
 
     try:
         logger.info("Dashboard API called")
-        result = get_dashboard_service(db)
+        result = await get_dashboard_service(db)
         return {
             "status": 200,
             "data": result
@@ -31,12 +31,12 @@ def dashboard(
 
 
 @router.get("/physical-activity")
-def physical_activity(
+async def physical_activity(
     db: Session = Depends(get_db)
 ):
     try:
         logger.info("Physical activity API called")
-        result = physical_activity_service(db)
+        result = await physical_activity_service(db)
         return {
             "status": 200,
             "data": result

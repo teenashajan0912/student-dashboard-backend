@@ -10,20 +10,21 @@ from sqlalchemy.orm import Session
 from security import hash_password
 import pandas as pd
 from models import Student
+from config import DEFAULT_ADMIN, ALLOW_ORIGINS
 
 Base.metadata.create_all(bind=engine)
 
-def create_default_user():
+async def create_default_user():
     db: Session = SessionLocal()
 
     existing = db.query(User).filter(User.username == "admin").first()
 
     if not existing:
         user = User(
-            username="admin",
-            email="admin@test.com",
-            hashed_password=hash_password("password123"),
-            role="admin",
+            username=DEFAULT_ADMIN["username"],
+            email=DEFAULT_ADMIN["email"],
+            hashed_password=hash_password(DEFAULT_ADMIN["password"]),
+            role=DEFAULT_ADMIN["role"],
             is_system=True
         )
 
@@ -37,7 +38,7 @@ def create_default_user():
 
 create_default_user()
 
-def load_csv_data():
+async def load_csv_data():
     db = SessionLocal()
 
     if db.query(Student).count() > 0:
@@ -66,13 +67,16 @@ def load_csv_data():
 
     db.close()
 
-load_csv_data()
-
 app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event():
+    await create_default_user()
+    await load_csv_data()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000","http://localhost:5173"],
+    allow_origins=ALLOW_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -84,5 +88,5 @@ app.include_router(dashboard_router)
 app.include_router(users_router)
 
 @app.get("/")
-def root():
+async def root():
     return {"message": "API Running.. "}

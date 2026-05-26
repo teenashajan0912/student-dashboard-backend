@@ -3,11 +3,9 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from datetime import datetime, timedelta, timezone
+from config import SECRET_KEY, ALGORITHM,PASSWORD_HASH_SCHEME,PASSWORD_HASH_DEPRECATED
 
-SECRET_KEY = "secret"
-ALGORITHM = "HS256"
-
-pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=[PASSWORD_HASH_SCHEME],deprecated=PASSWORD_HASH_DEPRECATED)
 
 ROLE_LEVEL = {
     "student": 1,
