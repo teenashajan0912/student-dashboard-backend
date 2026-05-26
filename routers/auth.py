@@ -1,24 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from schemas import (SignupRequest,LoginRequest,TokenResponse)
+from schemas import SignupRequest,LoginRequest,TokenResponse
 from deps import get_db
 from services.auth_service import (signup_service,login_service)
 from utils.logger import logger
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Auth"]
-)
+router = APIRouter(prefix="/auth",tags=["Auth"])
 
 @router.post("/signup")
-def signup(
+async def signup(
     payload: SignupRequest,
     db: Session = Depends(get_db)
 ):
 
     try:
         logger.info("Signup API called")
-        result = signup_service(payload, db)
+        result = await signup_service(payload, db)
         return {
             "status": 200,
             "data": result
@@ -43,14 +40,14 @@ def signup(
     "/login",
     response_model=TokenResponse
 )
-def login(
+async def login(
     payload: LoginRequest,
     db: Session = Depends(get_db)
 ):
 
     try:
         logger.info("Login API called")
-        result = login_service(payload, db)
+        result = await login_service(payload, db)
         return result
 
     except HTTPException as e:

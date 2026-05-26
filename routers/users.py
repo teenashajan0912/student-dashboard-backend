@@ -5,20 +5,17 @@ from security import require_role
 from services.user_service import (get_users_service,update_role_service,delete_user_service)
 from utils.logger import logger
 
-router = APIRouter(
-    prefix="/users",
-    tags=["Users"]
-)
+router = APIRouter(prefix="/users",tags=["Users"])
 
 @router.get("/")
-def get_users(
+async def get_users(
     db: Session = Depends(get_db),
     user=Depends(require_role("professor"))
 ):
 
     try:
         logger.info("Get users API called")
-        result = get_users_service(db)
+        result = await get_users_service(db)
         return {
             "status": 200,
             "data": result
@@ -37,7 +34,7 @@ def get_users(
 
 
 @router.put("/{user_id}/role")
-def update_role(
+async def update_role(
     user_id: int,
     new_role: str,
     db: Session = Depends(get_db),
@@ -47,7 +44,7 @@ def update_role(
     try:
 
         logger.info("Update role API called")
-        result = update_role_service(db,user_id,new_role,user)
+        result = await update_role_service(db,user_id,new_role,user)
 
         return {
             "status": 200,
@@ -67,7 +64,7 @@ def update_role(
 
 
 @router.delete("/{user_id}")
-def delete_user(
+async def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
     user=Depends(require_role("admin"))
@@ -75,7 +72,7 @@ def delete_user(
 
     try:
         logger.info("Delete user API called")
-        result = delete_user_service(db,user_id)
+        result = await delete_user_service(db,user_id)
 
         return {
             "status": 200,

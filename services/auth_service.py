@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from query.user_query import (get_user_by_username,create_user)
 from security import (hash_password,verify_password,create_access_token)
 
-def signup_service(payload, db):
+async def signup_service(payload, db):
     existing_user = get_user_by_username(db,payload.username)
     if existing_user:
         raise HTTPException(
@@ -21,7 +21,7 @@ def signup_service(payload, db):
     return {"message": "User created"}
 
 
-def login_service(payload, db):
+async def login_service(payload, db):
     user = get_user_by_username(db,payload.username)
     if not user:
         raise HTTPException(

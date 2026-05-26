@@ -1,6 +1,6 @@
 from query.student_query import fetch_students
 
-def get_dashboard_service(db):
+async def get_dashboard_service(db):
 
     students = fetch_students(db)
 
@@ -45,7 +45,7 @@ def get_dashboard_service(db):
 
     return result
 
-def physical_activity_service(db):
+async def physical_activity_service(db):
 
     students = fetch_students(db)
 

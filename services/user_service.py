@@ -1,11 +1,11 @@
 from fastapi import HTTPException
 from query.user_query import (get_all_users,get_user_by_id,delete_user_db)
 
-def get_users_service(db):
+async def get_users_service(db):
     return get_all_users(db)
 
 
-def update_role_service(db,user_id,new_role,current_user):
+async def update_role_service(db,user_id,new_role,current_user):
 
     target = get_user_by_id(db,user_id)
 
@@ -51,7 +51,7 @@ def update_role_service(db,user_id,new_role,current_user):
     }
 
 
-def delete_user_service(
+async def delete_user_service(
     db,
     user_id
 ):
